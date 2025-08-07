@@ -1,0 +1,35 @@
+name: Deploy VMware VM
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy-vm:
+    runs-on: self-hosted # Or a specific label for your self-hosted runner
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: ./terraform # Path to your Terraform files
+
+      - name: Terraform Plan
+        run: terraform plan -out=tfplan
+        env:
+          VSphere_User: ${{ secrets.VSPHERE_USERNAME }}
+          VSphere_Password: ${{ secrets.VSPHERE_PASSWORD }}
+        working-directory: ./terraform
+
+      - name: Terraform Apply
+        run: terraform apply tfplan
+        env:
+          VSphere_User: ${{ secrets.VSPHERE_USERNAME }}
+          VSphere_Password: ${{ secrets.VSPHERE_PASSWORD }}
+        working-directory: ./terraform
