@@ -1,0 +1,30 @@
+name: Deploy VMware VM
+
+on:
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  deploy-vm:
+    runs-on: self-hosted # Or a specific label for your self-hosted runner
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install PowerCLI (if not already present on runner)
+        shell: powershell
+        run: Install-Module -Name VMware.PowerCLI -Scope CurrentUser -Force
+
+      - name: Connect to vCenter and Deploy VM
+        shell: powershell
+        env:
+          VCENTER_SERVER: ${{ secrets.VCENTER_SERVER }}
+          VCENTER_USERNAME: ${{ secrets.VCENTER_USERNAME }}
+          VCENTER_PASSWORD: ${{ secrets.VCENTER_PASSWORD }}
+          VM_TEMPLATE_NAME: "MyVMTemplate"
+          NEW_VM_NAME: "MyNewVM"
+          DATACENTER_NAME: "MyDatacenter"
+          CLUSTER_NAME: "MyCluster"
+        run: |
+          Connect-VIServer -Server $env:VCENTER_SERVER -User $env:VCENTER_USERNAME -Password $env:VCENTER_PASSWORD
+          New-VM -Template $env:VM_TEMPLATE_NAME -Name $env:NEW_VM_NAME -Datacenter $env:DATACENTER_NAME -Cluster $env:CLUSTER_NAME
+          Disconnect-VIServer -Confirm:$false
